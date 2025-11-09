@@ -4,12 +4,9 @@
 
 
 ## Como usar os comandos
-1. Gravar os comandos
-Execulte main.m para gravar 50 amostras de cada comando ("Ligar" e "Desligar")
-2. Treinar a rede
-Execulte rede.m para extrair MFCCs e treinar a rede neural
-3.Reconhecer comandos
-Execute reconhecimento.m para abrir o menu interativo e testar o reconhecimento em tempo real
+1. Gravar os comandos: Execulte main.m para gravar 50 amostras de cada comando ("Ligar" e "Desligar")
+2. Treinar a rede: Execulte rede.m para extrair MFCCs e treinar a rede neural
+3. Reconhecer comandos: Execute reconhecimento.m para abrir o menu interativo e testar o reconhecimento em tempo real
 
 
 ### Tecnoligas Utilizadas
