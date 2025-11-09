@@ -1,0 +1,97 @@
+%Reconhecimento de voz com IA no MATLAB
+%Controle de uma lâmpada (acender/apagar)
+%Uso de técnicas de inteligência artificial
+
+% Define o diretório onde os arquivos serão salvos
+cd('C:\Users\Familia Guimarães\Documents\comandodevoz\bancodedados');
+
+% Captura de áudio
+labels = ["ligar", "desligar"];
+for i = 1:5
+    for label = labels
+        disp(['Fale o comando: ', label]);
+        recObj = audiorecorder(44100, 16, 1);       %44100 hz 16 bits 1 canal mono
+        recordblocking(recObj, 2);                  %Grava por 2 segundos
+        
+        audioData = getaudiodata(recObj);           %Extrai os dados da gravação
+        filename = sprintf('%s_%d.wav', label, i);  
+        audiowrite(filename, audioData, 44100);     %Salva o áudio em um arquivo .wav
+    end
+end
+%---------------------------------------------------------------------------------------
+%Reconhecimento de Voz com IA
+%Pre-processamento: Espectrogramas
+files = dir('*.wav');
+for k = 1:length(files)                                     %varre a pasta com audios gravados
+    [audioData, fs] = audioread(files(k).name);             %Lê o arquivo atual na posição K
+    [s, f, t] = spectrogram(audioData, 256, 250, 256, fs);  %s: matriz com energia f: vetor de frequência t: vetor de tempo
+    img = abs(s);                                                       %256: tamanho
+    %Matriz com energia de F: vetor de frequencia t:                                                        %da janel
+    %vetor tempo 256 tamanho da janela FFT                                                        
+    %250 sobreposição entre janelas                                                        
+    %Fs: taxa de amostragem                                                        
+                                                            
+                                                         
+    
+    % Exibe o espectrograma
+    figure;
+    imagesc(t, f, img);
+    axis xy;
+    colormap jet;
+    colorbar;
+    title(['Espectrograma de: ', files(k).name]);
+
+    % Salva como imagem .png
+
+    img = imresize(img, [227 227]); % tamanho para AlexNet ou similar
+    imwrite(mat2gray(img), [files(k).name(1:end-4), '.png']);
+end
+%-------------------------------------------------------------------------------------------
+%%
+%Criação do Dataset para treinamento
+
+imds = imageDatastore('*.png', ...
+    'IncludeSubfolders', false, ...
+    'LabelSource', 'foldernames');
+
+% Alternativamente, use nomes dos arquivos como rótulo:
+imds.Labels = categorical(extractBefore({imds.Files}, '_'));
+
+
+%Treinamento da Rede Neural
+net = alexnet;
+layers = net.Layers;
+layers(end-2) = fullyConnectedLayer(2); % 2 classes
+layers(end) = classificationLayer;
+
+options = trainingOptions('adam', ...
+    'MaxEpochs', 10, ...
+    'MiniBatchSize', 8, ...
+    'Plots', 'training-progress');
+
+trainedNet = trainNetwork(imds, layers, options);
+
+% Reconhecimento em tempo Real
+
+recObj = audiorecorder(44100, 16, 1);
+disp('Fale agora:');
+recordblocking(recObj, 2);
+audioData = getaudiodata(recObj);
+audiowrite('teste.wav', audioData, 44100);
+
+% Gera espectrograma
+[audioData, fs] = audioread('teste.wav');
+[s, ~, ~] = spectrogram(audioData, 256, 250, 256, fs);
+img = abs(s);
+img = imresize(img, [227 227]);
+img = mat2gray(img);
+
+% Classifica
+label = classify(trainedNet, img);
+disp(['Comando reconhecido: ', char(label)]);
+
+if label == "ligar"
+    disp('💡 A lâmpada foi acesa.');
+elseif label == "desligar"
+    disp('💡 A lâmpada foi apagada.');
+end

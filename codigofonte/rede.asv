@@ -1,0 +1,89 @@
+% Script 2: rede.m — Treinamento da rede neural
+clear; clc;
+
+cd('C:\Users\Familia Guimarães\Documents\comandodevoz\bancodedados\audios');
+mkdir('modelo');
+files = dir('*.wav');
+
+x=[]; %matriz de carcterísticas
+y=[]; %Vetor de rótulos
+
+% Geração dos espectrogramas
+for k = 1:length(files)
+    [audioData, fs] = audioread(files(k).name);
+   
+    %Estração dos MFCCs
+    coeffs = mfcc(audioData, fs);  % matriz N x 13
+    mfccMean = mean(coeffs);       % vetor 1 x 13
+    
+    X = [X; mfccMean];             % acumula os vetores
+    nomeArquivo = files(k).name;
+    comando = extractBefore(nomeArquivo, '_');
+    Y = [Y; string(comando)];
+
+end
+%Conversão para tipos adequados
+X = double(X);
+Y = categorical(Y);
+
+% Criação do imageDatastore
+imds = imageDatastore('imagens','IncludeSubfolders',false,'LabelSource','none');
+fileNames = string(imds.Files);
+baseNames = extractAfter(fileNames, filesep);
+labels = extractBefore(baseNames, '_');
+imds.Labels = categorical(labels);
+
+% Definição da rede do zero
+layers = [
+    imageInputLayer([227 227 1], 'Name', 'input')
+
+    convolution2dLayer(3, 16, 'Padding', 'same', 'Name', 'conv_1')
+    batchNormalizationLayer('Name', 'bn_1')
+    reluLayer('Name', 'relu_1')
+    maxPooling2dLayer(2, 'Stride', 2, 'Name', 'pool_1')
+
+    convolution2dLayer(3, 32, 'Padding', 'same', 'Name', 'conv_2')
+    batchNormalizationLayer('Name', 'bn_2')
+    reluLayer('Name', 'relu_2')
+    maxPooling2dLayer(2, 'Stride', 2, 'Name', 'pool_2')
+
+    convolution2dLayer(3, 64, 'Padding', 'same', 'Name', 'conv_3')
+    batchNormalizationLayer('Name', 'bn_3')
+    reluLayer('Name', 'relu_3')
+    maxPooling2dLayer(2, 'Stride', 2, 'Name', 'pool_3')
+
+    fullyConnectedLayer(128, 'Name', 'fc_1')
+    reluLayer('Name', 'relu_fc')
+    dropoutLayer(0.5, 'Name', 'dropout')
+    fullyConnectedLayer(2, 'Name', 'fc_out')
+    softmaxLayer('Name', 'softmax')
+    classificationLayer('Name', 'output')
+];
+
+% Opções de treinamento
+options = trainingOptions('adam', ...
+    'MaxEpochs', 20, ...
+    'MiniBatchSize', 16, ...
+    'InitialLearnRate',1e-4, ...
+    'Shuffle','every-epoch', ...
+    'Plots', 'training-progress', ...
+    'Verbose',false);
+
+% Treinamento
+trainedNet = trainNetwork(imds, layers, options);
+
+% Salvando o modelo
+save(fullfile('modelo', 'redeComandoVoz.mat'), 'trainedNet');
+
+
+% Teste rápido com um dos áudios gravados
+testeAudio = 'ligar_1.wav';  % escolha qualquer arquivo do seu banco
+[audioData, fs] = audioread(testeAudio);
+[s, ~, ~] = spectrogram(audioData, 256, 250, 256, fs);
+img = imresize(abs(s), [227 227]);
+img = mat2gray(img);
+img = reshape(img, [227 227 1]);  % ajusta para entrada da rede
+
+% Classificação
+label = classify(trainedNet, img);
+disp(['Teste com "', testeAudio, '" → Comando reconhecido: ', char(label)]);
