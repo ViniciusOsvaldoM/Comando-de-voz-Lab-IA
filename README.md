@@ -25,4 +25,11 @@
 - Sistema leve e rápido
 - Fácil expandão para novos comandos
 
+![Treinamento1](bancodedados/treinamentodarede.png)
+
+
+![Treinamento2](bancodedados/treinamento2.png)
+
+
+
 #### Referências
