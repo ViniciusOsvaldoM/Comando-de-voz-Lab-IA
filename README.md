@@ -1,6 +1,15 @@
-# Trabalho 1 - Laboratório de Inteligência Artificial
-- Breno Alves Guimarães
-- Vinícius Osvaldo Miranda Alves
+# Reconhecimento de Comando de voz por Rede Neural 
+
+
+**Instituição:** CENTRO FEDERAL DE EDUCAÇÃO TECNOLÓGICA DE MINAS GERAIS
+
+**Curso:** Engenharia Elétrica
+
+**Disciplina:** Laboratório de Inteligência Artificial
+
+**Professor**: Everthon de Souza Oliveira
+
+**Autores:** Breno Alves Guimarães & Vinícius Osvaldo Miranda Alves
 
 
 ## Como usar os comandos
